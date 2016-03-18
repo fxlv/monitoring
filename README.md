@@ -1,6 +1,7 @@
 # monitoring
 
 [![Build Status](https://travis-ci.org/fxlv/monitoring.svg?branch=master)](https://travis-ci.org/fxlv/monitoring)
+[![Code Climate](https://codeclimate.com/github/fxlv/monitoring/badges/gpa.svg)](https://codeclimate.com/github/fxlv/monitoring)
 
 A collection of scripts and programs that gather various system metrics.
 Output is JSON (or optionally, key=value).
