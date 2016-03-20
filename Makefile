@@ -11,10 +11,10 @@ SRCDIR=src
 all: $(BINDIR)/sockstat $(BINDIR)/files
 
 $(BINDIR)/sockstat: $(SRCDIR)/sockstat.c $(SRCDIR)/common.h
-	gcc -o $(BINDIR)/sockstat $(SRCDIR)/sockstat.c $(SRCDIR)/common.c
+	gcc -o $(BINDIR)/sockstat $(SRCDIR)/sockstat.c $(SRCDIR)/common.c $(CFLAGS)
 
 $(BINDIR)/files: $(SRCDIR)/files.c $(SRCDIR)/common.h
-	gcc -o $(BINDIR)/files $(SRCDIR)/files.c $(SRCDIR)/common.c 
+	gcc -o $(BINDIR)/files $(SRCDIR)/files.c $(SRCDIR)/common.c $(CFLAGS)
 
 clean:
 	rm -rf $(BINDIR)/files
