@@ -1,14 +1,17 @@
-CFLAGS=-Wall -g
+CFLAGS=-Wall -O2
 #CFLAGS=-Wall -O2
 
 INSTALLDIR=/opt/monitoring
-
 
 
 BINDIR=bin
 SRCDIR=src
 
 all: $(BINDIR)/sockstat $(BINDIR)/files
+
+debug: CFLAGS += -g
+debug: $(BINDIR)/sockstat $(BINDIR)/files
+
 
 $(BINDIR)/sockstat: $(SRCDIR)/sockstat.c $(SRCDIR)/common.h
 	gcc -o $(BINDIR)/sockstat $(SRCDIR)/sockstat.c $(SRCDIR)/common.c $(CFLAGS)
