@@ -13,8 +13,6 @@ import argparse
 from threading import Thread, Semaphore
 from Queue import Queue
 import json
-import socket
-
 
 DEBUG = False
 # time in secons to wait for the threads to complete
@@ -55,7 +53,7 @@ def connect(target, port):
             print "Failed to connect"
             print e
         return result
-    if DEBUG: 
+    if DEBUG:
         print "Receiving..."
     try:
         banner = s.recv(2048)
@@ -90,13 +88,14 @@ def connect(target, port):
             ))
     return result
 
+
 def check_hostname(target):
     try:
         if socket.gethostbyname(target):
             return True
     except Exception, e:
         if DEBUG:
-            print "Exception: ",e
+            print "Exception: ", e
         return False
 
 
@@ -108,9 +107,11 @@ def check_target(target, port, result_queue):
     result_queue.put(time_socket)
     return True
 
+
 def get_timestamp():
     # TODO: Assert that : (datetime.datetime.utcnow() - datetime.datetime(1970,1,1)).total_seconds() - float(datetime.datetime.now().strftime("%s"))
-    return (datetime.datetime.utcnow() - datetime.datetime(1970,1,1)).total_seconds()
+    return (datetime.datetime.utcnow() - datetime.datetime(1970, 1,
+                                                           1)).total_seconds()
 
 
 def main():
@@ -128,7 +129,6 @@ def main():
     parser.add_argument("-a", action='store_true', help="Output only average")
     parser.add_argument("-j", action='store_true', help="JSON output")
     args = parser.parse_args()
-
 
     target = args.target
     if len(target.split(",")) > 1:
@@ -158,7 +158,7 @@ def main():
     while result_queue.qsize() != count:
         # we wait MAX_WAIT_TIME for the thread to return results
         # if it takes longer, most likely it crashed
-        # something to debug 
+        # something to debug
         wait_time = datetime.datetime.now() - wait_start
         if wait_time.seconds > MAX_WAIT_TIME:
             break
@@ -171,20 +171,20 @@ def main():
     # once all threads are done, check result_queue for results
     if not result_queue.empty():
         if average_only:
-                averages = {}
-                time_socket = []
-                time_http_banner = []
-                result_count = 0
-                while not result_queue.empty():
-                    result = result_queue.get()
-                    result_count += 1
-                    if "time_socket" in result:
-                        time_socket.append(result["time_socket"])
-                    if "time_http_banner" in result:
-                        time_http_banner.append(result["time_http_banner"])
-                print "Result count: {}".format(result_count)
-                print "Time socket: {}".format(average(time_socket))
-                print "Time HTTP banner: {}".format(average(time_http_banner))
+            averages = {}
+            time_socket = []
+            time_http_banner = []
+            result_count = 0
+            while not result_queue.empty():
+                result = result_queue.get()
+                result_count += 1
+                if "time_socket" in result:
+                    time_socket.append(result["time_socket"])
+                if "time_http_banner" in result:
+                    time_http_banner.append(result["time_http_banner"])
+            print "Result count: {}".format(result_count)
+            print "Time socket: {}".format(average(time_socket))
+            print "Time HTTP banner: {}".format(average(time_http_banner))
         else:
             if not use_json_output:
                 print "{} results".format(result_queue.qsize())
@@ -193,13 +193,14 @@ def main():
     else:
         print "No results???"
 
+
 def average(result_list):
     total = 0
     for member in result_list:
         total += member
     return total / len(result_list)
-    
-        
+
+
 if __name__ == "__main__":
     try:
         main()
