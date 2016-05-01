@@ -176,7 +176,7 @@ def main():
     # once all threads are done, check result_queue for results
     if result_queue.empty():
         die("No results?")
-
+    # average output only 
     if average_only:
         averages = {}
         time_socket = []
@@ -192,11 +192,24 @@ def main():
         print "Result count: {}".format(result_count)
         print "Time socket: {}".format(average(time_socket))
         print "Time HTTP banner: {}".format(average(time_http_banner))
+    # non-average output
     else:
         if not use_json_output:
             print "{} results".format(result_queue.qsize())
-        while not result_queue.empty():
-            print json.dumps(result_queue.get())
+
+        if result_queue.qsize() == 1:
+            # if there's only one result,
+            # encapsulate the result in additional layers 
+            # that describe target host and port
+            results = {}
+            results[target] = {}
+            results[target][port]=result_queue.get()
+            print json.dumps(results)
+        else:
+            while not result_queue.empty():
+                # if there's more than one result, we can't handle it at the moment
+                # so just iterate over results queue and dump it all 
+                print json.dumps(result_queue.get())
 
 
 def average(result_list):
