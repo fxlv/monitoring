@@ -18,6 +18,11 @@ DEBUG = False
 # time in secons to wait for the threads to complete
 MAX_WAIT_TIME = 3
 
+def die(msg=None):
+    if msg:
+        print msg
+    sys.exit(1)
+
 
 def connect(target, port):
     """
@@ -169,29 +174,29 @@ def main():
     if not use_json_output:
         print  #  print a newline after all the dots
     # once all threads are done, check result_queue for results
-    if not result_queue.empty():
-        if average_only:
-            averages = {}
-            time_socket = []
-            time_http_banner = []
-            result_count = 0
-            while not result_queue.empty():
-                result = result_queue.get()
-                result_count += 1
-                if "time_socket" in result:
-                    time_socket.append(result["time_socket"])
-                if "time_http_banner" in result:
-                    time_http_banner.append(result["time_http_banner"])
-            print "Result count: {}".format(result_count)
-            print "Time socket: {}".format(average(time_socket))
-            print "Time HTTP banner: {}".format(average(time_http_banner))
-        else:
-            if not use_json_output:
-                print "{} results".format(result_queue.qsize())
-            while not result_queue.empty():
-                print json.dumps(result_queue.get())
+    if result_queue.empty():
+        die("No results?")
+
+    if average_only:
+        averages = {}
+        time_socket = []
+        time_http_banner = []
+        result_count = 0
+        while not result_queue.empty():
+            result = result_queue.get()
+            result_count += 1
+            if "time_socket" in result:
+                time_socket.append(result["time_socket"])
+            if "time_http_banner" in result:
+                time_http_banner.append(result["time_http_banner"])
+        print "Result count: {}".format(result_count)
+        print "Time socket: {}".format(average(time_socket))
+        print "Time HTTP banner: {}".format(average(time_http_banner))
     else:
-        print "No results???"
+        if not use_json_output:
+            print "{} results".format(result_queue.qsize())
+        while not result_queue.empty():
+            print json.dumps(result_queue.get())
 
 
 def average(result_list):
