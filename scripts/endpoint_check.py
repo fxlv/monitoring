@@ -18,6 +18,7 @@ DEBUG = False
 # time in secons to wait for the threads to complete
 MAX_WAIT_TIME = 3
 
+
 def die(msg=None):
     if msg:
         print msg
@@ -176,7 +177,7 @@ def main():
     # once all threads are done, check result_queue for results
     if result_queue.empty():
         die("No results?")
-    # average output only 
+    # average output only
     if average_only:
         averages = {}
         time_socket = []
@@ -203,12 +204,12 @@ def main():
             # that describe target host and port
             results = {}
             results[target] = {}
-            results[target][port]=result_queue.get()
+            results[target][port] = result_queue.get()
             print json.dumps(results)
         else:
             while not result_queue.empty():
                 # if there's more than one result, we can't handle it at the moment
-                # so just iterate over results queue and dump it all 
+                # so just iterate over results queue and dump it all
                 print json.dumps(result_queue.get())
 
 
