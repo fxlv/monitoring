@@ -37,11 +37,12 @@ def main(arg):
     # then do as the nice human has requested and output json
 
     if arg == "json":
-        json_str = {"tcp.orphans":tcp_orphans, 
-        "tcp.sockets_in_use":tcp_sockets_inuse,
-        "tcp.mem":tcp_mem, "tcp.max_orphans":max_orphans,
-        "udp.sockets_in_use":udp_sockets_inuse, 
-        "udp.mem":udp_mem}
+        json_str = {"tcp.orphans": tcp_orphans,
+                    "tcp.sockets_in_use": tcp_sockets_inuse,
+                    "tcp.mem": tcp_mem,
+                    "tcp.max_orphans": max_orphans,
+                    "udp.sockets_in_use": udp_sockets_inuse,
+                    "udp.mem": udp_mem}
         print json.dumps(json_str)
 
     else:
