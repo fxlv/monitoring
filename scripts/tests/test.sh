@@ -1,4 +1,5 @@
 #!/bin/bash
+cd ..
 echo "flake8"
 flake8 endpoint_check.py
 echo "pyflakes"
