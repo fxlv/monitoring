@@ -190,7 +190,6 @@ def parse_results(result_queue):
     results["time_socket_avg"] = average(results["time_socket"])
     results["time_banner_avg"] = average(results["time_banner"])
     results["time_http_banner_avg"] = average(results["time_http_banner"])
-
     return results
 
 
@@ -205,9 +204,13 @@ def human_output(results):
     if results["time_http_banner_avg"]:
         print "Time HTTP banner: {}".format(results["time_http_banner_avg"])
 
-def json_output(result_queue):A
+def json_output(results):
     """Render the results as JSON"""
-    pass
+    # for easier use in influxdb, add to extra layers around
+    json_results = {}
+    json_results[results["target"]] = {}
+    json_results[results["target"]][results["port"]] = results
+    print json.dumps(json_results)
 
 def parse_args():
     """Parse arguments and return them"""
