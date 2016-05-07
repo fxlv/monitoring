@@ -145,6 +145,69 @@ def validate_target(target):
             return True
     return False
 
+def average(result_list):
+    """Return and average from a list"""
+    total = 0
+    for member in result_list:
+        # it is possible that one if the results is 'None'
+        # in such case return None as well
+        if member == None:
+            return None
+        total += member
+    return total / len(result_list)
+
+def success_ratio(results):
+    """Calculate success ratio from list of booleans"""
+    ratio = 0 # default value
+    oneresult = 100 / float(len(results))
+    for result in results:
+        if result:
+            ratio += oneresult
+    return int(ratio)
+
+
+def parse_results(result_queue):
+    """Iterate over the result queue and return results as a dictionary"""
+
+    results = {}
+    results["target"] = None
+    results["port"] = None
+    results["connection_status"] = []
+    results["time_socket"] = []
+    results["time_banner"] = []
+    results["time_http_banner"] = []
+
+    while not result_queue.empty():
+        result = result_queue.get()
+        results["target"] = result["target"]
+        results["port"] = result["port"]
+        results["connection_status"].append(result["connection_status"])
+        results["time_socket"].append(result["time_socket"])
+        results["time_banner"].append(result["time_banner"])
+        results["time_http_banner"].append(result["time_http_banner"])
+
+    results["success_rate"] = success_ratio(results["connection_status"])
+    results["time_socket_avg"] = average(results["time_socket"])
+    results["time_banner_avg"] = average(results["time_banner"])
+    results["time_http_banner_avg"] = average(results["time_http_banner"])
+
+    return results
+
+
+def human_output(results):
+    """Render the results in a human friendly output"""
+    print "Target: {}:{}".format(results["target"], results["port"])
+    print "Success rate: {}%".format(results["success_rate"])
+    if results["time_socket_avg"]:
+        print "Time socket: {}".format(results["time_socket_avg"])
+    if results["time_banner_avg"]:
+        print "Time banner: {}".format(results["time_banner_avg"])
+    if results["time_http_banner_avg"]:
+        print "Time HTTP banner: {}".format(results["time_http_banner_avg"])
+
+def json_output(result_queue):A
+    """Render the results as JSON"""
+    pass
 
 def parse_args():
     """Parse arguments and return them"""
@@ -211,57 +274,25 @@ def main():
         wait_time = datetime.datetime.now() - wait_start
         if wait_time.total_seconds() > MAX_THREAD_WAIT_TIME:
              die("MAX_THREAD_WAIT_TIME violation")
-
-        if not use_json_output:
+        if interactive_mode:
             sys.stdout.write(".")
             sys.stdout.flush()
+
         time.sleep(0.1)
-    if not use_json_output:
+    if interactive_mode:
         print  #  print a newline after all the dots
+
     # once all threads are done, check result_queue for results
     if result_queue.empty():
-        die("No results?")
-    # average output only
-    if average_only:
-        averages = {}
-        time_socket = []
-        time_http_banner = []
-        result_count = 0
-        while not result_queue.empty():
-            result = result_queue.get()
-            result_count += 1
-            if "time_socket" in result:
-                time_socket.append(result["time_socket"])
-            if "time_http_banner" in result:
-                time_http_banner.append(result["time_http_banner"])
-        print "Result count: {}".format(result_count)
-        print "Time socket: {}".format(average(time_socket))
-        print "Time HTTP banner: {}".format(average(time_http_banner))
-    # non-average output
+        die("No results?") # TODO: more meaningful error would be nice
+    
+    results = parse_results(result_queue)
+    
+    # present the results in the requested way
+    if interactive_mode:
+        human_output(results)
     else:
-        if not use_json_output:
-            print "{} results".format(result_queue.qsize())
-
-        if result_queue.qsize() == 1:
-            # if there's only one result,
-            # encapsulate the result in additional layers 
-            # that describe target host and port
-            results = {}
-            results[target] = {}
-            results[target][port] = result_queue.get()
-            print json.dumps(results)
-        else:
-            while not result_queue.empty():
-                # if there's more than one result, we can't handle it at the moment
-                # so just iterate over results queue and dump it all
-                print json.dumps(result_queue.get())
-
-
-def average(result_list):
-    total = 0
-    for member in result_list:
-        total += member
-    return total / len(result_list)
+        json_output(results)
 
 
 if __name__ == "__main__":
