@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#
-# Repeatedly connect to same server to check if it is responding.
-# Try to grab a banner.
-# If it does not send a banner, send an HTTP request.
-#
+"""
+Repeatedly connect to same server to check if it is responding.
+Try to grab a banner.
+If it does not send a banner, send an HTTP request.
+"""
 
 import socket
 import sys
@@ -13,15 +13,20 @@ import argparse
 from threading import Thread, Semaphore
 from Queue import Queue
 import json
+import re
 
 DEBUG = False
 # time in secons to wait for the threads to complete
 MAX_WAIT_TIME = 3
 
 
-def die(msg=None):
-    if msg:
-        print msg
+def die(error_msg=None):
+    """
+    Exit with code 1.
+    Optionally print an error message.
+    """
+    if error_msg:
+        print "Error: {0}".format(error_msg)
     sys.exit(1)
 
 
@@ -96,12 +101,11 @@ def connect(target, port):
 
 
 def check_hostname(target):
+    """Return true if target hostname can be resolved"""
     try:
         if socket.gethostbyname(target):
             return True
-    except Exception, e:
-        if DEBUG:
-            print "Exception: ", e
+    except Exception:
         return False
 
 
@@ -120,46 +124,73 @@ def get_timestamp():
                                                            1)).total_seconds()
 
 
-def main():
-    s = Semaphore()
-    result_queue = Queue()
+def target_is_ip(target):
+    """Return true if target is an IPv4 IP"""
+    pattern = "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$"
+    return re.match(pattern, target)
+
+
+def validate_target(target):
+    """Return true if target is valid
+
+    Determine if it's a valid IP or a hostname.
+    For hostnames, check if it can be resolved.
+    """
+    if target_is_ip(target):
+        return True
+    else:
+        if check_hostname(target):
+            return True
+    return False
+
+
+def parse_args():
+    """Parse arguments and return them"""
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help="Target IP or hostname")
-    parser.add_argument("port", type=int, help="Target port")
+    parser.add_argument("-p",
+                        type=int,
+                        default=80,
+                        help="Target port. Default port is 80")
     parser.add_argument("-c", default=1, type=int, help="Request count")
     parser.add_argument("-s",
                         default=1,
                         type=int,
                         help="Sleep time between retries (seconds)")
-    parser.add_argument("-d", action='store_true', help="Enable debug mode")
     parser.add_argument("-a", action='store_true', help="Output only average")
     parser.add_argument("-j", action='store_true', help="JSON output")
     args = parser.parse_args()
 
+    return args
+
+
+def main():
+    """Main logic happens here"""
+
+    # set up required variables
+    # TODO: this can probably be done in a better way
+    args = parse_args()
     target = args.target
-    if len(target.split(",")) > 1:
-        targets = target.split(",")
-    else:
-        targets = [target]
-    for target in targets:
-        if not check_hostname(target):
-            print "Could not resolve {}".format(target)
-            print "Cannot continue..."
-            sys.exit(1)
-    port = args.port
+    port = args.p
     count = args.c
     sleep_time = args.s
     average_only = args.a
-    global DEBUG  # TODO: there must be a better way to handle this
-    DEBUG = args.d
+    s = Semaphore()
+    result_queue = Queue()
     use_json_output = args.j
+
+    if not validate_target(target):
+        msg = "Invalid target provided. Target has to be an IP address or a hostname."
+        die(msg)
+    # target is valid and we can proceed
+
+
     if not use_json_output:
         print "Target: {}, port: {}, connect count: {}".format(target, port,
                                                                count)
     for i in range(0, count):
-        for target in targets:
-            t = Thread(target=check_target, args=(target, port, result_queue))
-            t.start()
+        t = Thread(target=check_target, args=(target, port, result_queue))
+        t.start()
     wait_start = datetime.datetime.now()
     while result_queue.qsize() != count:
         # we wait MAX_WAIT_TIME for the thread to return results
