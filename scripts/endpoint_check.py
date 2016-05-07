@@ -16,8 +16,10 @@ import json
 import re
 
 DEBUG = False
-# time in secons to wait for the threads to complete
-MAX_WAIT_TIME = 3
+# maximum time in secons to wait for the threads to complete
+# this is not the same as timeout for the tcp connections
+# but rather a way to abort if a thread gets 'stuck'
+MAX_THREAD_WAIT_TIME = 3
 
 
 def die(error_msg=None):
@@ -159,8 +161,8 @@ def parse_args():
                         help="Sleep time between retries (seconds)")
     parser.add_argument("-a", action='store_true', help="Output only average")
     parser.add_argument("-j", action='store_true', help="JSON output")
+    parser.add_argument("-b", action='store_true', help="Batch mode (non-interactive")
     args = parser.parse_args()
-
     return args
 
 
@@ -172,33 +174,44 @@ def main():
     args = parse_args()
     target = args.target
     port = args.p
-    count = args.c
     sleep_time = args.s
     average_only = args.a
     s = Semaphore()
     result_queue = Queue()
     use_json_output = args.j
 
+    # interactive mode or batch mode?
+    if args.b:
+        interactive_mode = False
+    else:
+        interactive_mode = True
+
+    # validate the target
     if not validate_target(target):
         msg = "Invalid target provided. Target has to be an IP address or a hostname."
         die(msg)
-    # target is valid and we can proceed
+    # print out a summary of work to be done
+    if interactive_mode:
+        print "Target: {}, port: {}, connect count: {}".format(target, port, args.c)
 
+    # launch the actual test(-s)
 
-    if not use_json_output:
-        print "Target: {}, port: {}, connect count: {}".format(target, port,
-                                                               count)
-    for i in range(0, count):
+    for i in range(args.c):
         t = Thread(target=check_target, args=(target, port, result_queue))
         t.start()
+    if interactive_mode:
+        print "All the threads are running, wait please"
+
+    # all threads running, wait on results
     wait_start = datetime.datetime.now()
-    while result_queue.qsize() != count:
-        # we wait MAX_WAIT_TIME for the thread to return results
+    while result_queue.qsize() != args.c:
+        # we wait MAX_THREAD_WAIT_TIME for the thread to return results
         # if it takes longer, most likely it crashed
         # something to debug
         wait_time = datetime.datetime.now() - wait_start
-        if wait_time.seconds > MAX_WAIT_TIME:
-            break
+        if wait_time.total_seconds() > MAX_THREAD_WAIT_TIME:
+             die("MAX_THREAD_WAIT_TIME violation")
+
         if not use_json_output:
             sys.stdout.write(".")
             sys.stdout.flush()
