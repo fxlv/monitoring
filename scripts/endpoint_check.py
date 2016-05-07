@@ -16,7 +16,7 @@ import json
 import re
 
 DEBUG = False
-# maximum time in secons to wait for the threads to complete
+# maximum time in seconds to wait for the threads to complete
 # this is not the same as timeout for the tcp connections
 # but rather a way to abort if a thread gets 'stuck'
 MAX_THREAD_WAIT_TIME = 3
@@ -145,6 +145,7 @@ def validate_target(target):
             return True
     return False
 
+
 def average(result_list):
     """Return and average from a list"""
     total = 0
@@ -156,9 +157,10 @@ def average(result_list):
         total += member
     return total / len(result_list)
 
+
 def success_ratio(results):
     """Calculate success ratio from list of booleans"""
-    ratio = 0 # default value
+    ratio = 0  # default value
     oneresult = 100 / float(len(results))
     for result in results:
         if result:
@@ -204,6 +206,7 @@ def human_output(results):
     if results["time_http_banner_avg"]:
         print "Time HTTP banner: {}".format(results["time_http_banner_avg"])
 
+
 def json_output(results):
     """Render the results as JSON"""
     # for easier use in influxdb, add to extra layers around
@@ -211,6 +214,7 @@ def json_output(results):
     json_results[results["target"]] = {}
     json_results[results["target"]][results["port"]] = results
     print json.dumps(json_results)
+
 
 def parse_args():
     """Parse arguments and return them"""
@@ -227,7 +231,9 @@ def parse_args():
                         help="Sleep time between retries (seconds)")
     parser.add_argument("-a", action='store_true', help="Output only average")
     parser.add_argument("-j", action='store_true', help="JSON output")
-    parser.add_argument("-b", action='store_true', help="Batch mode (non-interactive")
+    parser.add_argument("-b",
+                        action='store_true',
+                        help="Batch mode (non-interactive")
     args = parser.parse_args()
     return args
 
@@ -258,7 +264,8 @@ def main():
         die(msg)
     # print out a summary of work to be done
     if interactive_mode:
-        print "Target: {}, port: {}, connect count: {}".format(target, port, args.c)
+        print "Target: {}, port: {}, connect count: {}".format(target, port,
+                                                               args.c)
 
     # launch the actual test(-s)
 
@@ -276,7 +283,7 @@ def main():
         # something to debug
         wait_time = datetime.datetime.now() - wait_start
         if wait_time.total_seconds() > MAX_THREAD_WAIT_TIME:
-             die("MAX_THREAD_WAIT_TIME violation")
+            die("MAX_THREAD_WAIT_TIME violation")
         if interactive_mode:
             sys.stdout.write(".")
             sys.stdout.flush()
@@ -287,10 +294,10 @@ def main():
 
     # once all threads are done, check result_queue for results
     if result_queue.empty():
-        die("No results?") # TODO: more meaningful error would be nice
-    
+        die("No results?")  # TODO: more meaningful error would be nice
+
     results = parse_results(result_queue)
-    
+
     # present the results in the requested way
     if interactive_mode:
         human_output(results)
