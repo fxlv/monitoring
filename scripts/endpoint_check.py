@@ -10,7 +10,7 @@ import sys
 import time
 import datetime
 import argparse
-from threading import Thread, Semaphore
+from threading import Thread
 from Queue import Queue
 import json
 import re
@@ -246,9 +246,6 @@ def main():
     args = parse_args()
     target = args.target
     port = args.p
-    sleep_time = args.s
-    average_only = args.a
-    s = Semaphore()
     result_queue = Queue()
     use_json_output = args.j
 
